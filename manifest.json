@@ -1,7 +1,7 @@
 {
-  "name": "Hub",
+  "name": "Doma's Hub",
   "short_name": "Hub",
-  "description": "Launcher centrale per i progetti personali: Trip, AenaPMI, Urbex.",
+  "description": "Launcher centrale per i progetti personali: TripKm e UrbexPMI.",
   "start_url": "/hub/",
   "scope": "/hub/",
   "display": "standalone",
