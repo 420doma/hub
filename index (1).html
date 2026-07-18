@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Hub</title>
+
+<!-- ============ VIEWPORT & PWA CORE ============ -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0a0c0f">
+<link rel="manifest" href="manifest.json">
+
+<!-- ============ SUPPORTO iOS (Safari non legge manifest.json a pieno) ============ -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hub">
+<link rel="apple-touch-icon" href="icona-192.png">
+
+<!-- ============ SUPPORTO ANDROID / CHROME ============ -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<style>
+  /* ============================================================
+     TOKEN DI DESIGN
+     Palette "asfalto notturno": fondo quasi-nero con superfici
+     leggermente rilevate e un unico accento ambra (richiamo ai
+     cluster strumenti / catarifrangenti stradali — coerente con
+     moto, volo, esplorazione notturna).
+     ============================================================ */
+  :root{
+    --bg:            #0a0c0f;
+    --surface:       #14171c;
+    --surface-2:     #1b1f26;
+    --border:        rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text:          #eef0f3;
+    --text-muted:    #8b93a1;
+    --text-faint:    #565c68;
+    --accent:        #e8a33d;
+    --accent-dim:    rgba(232,163,61,0.14);
+    --radius-lg:     22px;
+    --radius-md:     16px;
+    --radius-sm:     10px;
+    --safe-top:      env(safe-area-inset-top, 0px);
+    --safe-bottom:   env(safe-area-inset-bottom, 0px);
+    --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Roboto",
+               "Segoe UI", system-ui, sans-serif;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-ui);
+    overscroll-behavior:none;
+  }
+
+  body{
+    /* leggera texture "asfalto": grana quasi impercettibile via gradiente radiale */
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.05), transparent 60%),
+      var(--bg);
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ============================================================
+     STATUS BAR — piccolo tocco "sistema operativo": ora live +
+     etichetta hub. Rinforza la sensazione di launcher nativo.
+     ============================================================ */
+  .statusbar{
+    padding: calc(14px + var(--safe-top)) 20px 6px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:13px;
+    color:var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    letter-spacing:0.02em;
+  }
+
+  header.hero{
+    padding: 8px 24px 28px;
+    text-align:center;
+  }
+  header.hero h1{
+    margin:0 0 6px;
+    font-size:clamp(26px, 6vw, 34px);
+    font-weight:700;
+    letter-spacing:-0.02em;
+  }
+  header.hero p{
+    margin:0;
+    color:var(--text-muted);
+    font-size:14px;
+  }
+
+  /* ============================================================
+     GRIGLIA APP — mobile-first, si allarga con eleganza su desktop
+     restando racchiusa in un container centrale.
+     ============================================================ */
+  main{
+    flex:1;
+    width:100%;
+    max-width:640px;
+    margin:0 auto;
+    padding: 4px 20px calc(40px + var(--safe-bottom));
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:14px;
+  }
+
+  @media (min-width: 560px){
+    .grid{ grid-template-columns: repeat(3, 1fr); gap:16px; }
+  }
+  @media (min-width: 900px){
+    main{ max-width:840px; padding-top:24px; }
+    .grid{ gap:18px; }
+  }
+
+  .app-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:18px 16px 16px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:12px;
+    cursor:pointer;
+    text-align:left;
+    color:inherit;
+    font-family:inherit;
+    /* feedback tattile fluido */
+    transition: transform 0.15s cubic-bezier(.2,.8,.2,1), background 0.15s ease, border-color 0.15s ease;
+  }
+  .app-card:active{
+    transform: scale(0.94);
+    background:var(--surface-2);
+  }
+  @media (hover:hover){
+    .app-card:hover{ border-color:var(--border-strong); }
+  }
+
+  .app-icon{
+    width:52px;
+    height:52px;
+    border-radius:var(--radius-sm);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    background: var(--icon-bg, var(--accent-dim));
+    border:1px solid var(--border);
+  }
+
+  .app-title{
+    font-size:15px;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .app-desc{
+    font-size:12px;
+    color:var(--text-muted);
+    line-height:1.4;
+    margin-top:-8px;
+  }
+
+  footer.hub-footer{
+    text-align:center;
+    color:var(--text-faint);
+    font-size:11px;
+    padding-bottom:16px;
+    letter-spacing:0.02em;
+  }
+
+  /* ============================================================
+     APP VIEWER — overlay a schermo intero con iframe.
+     Nascosto di default, attivato via classe .open.
+     ============================================================ */
+  #app-viewer{
+    position:fixed;
+    inset:0;
+    background:var(--bg);
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    opacity:0;
+    pointer-events:none;
+    transform: translateY(12px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  #app-viewer.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:none;
+  }
+
+  .viewer-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding: calc(10px + var(--safe-top)) 14px 10px;
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .viewer-back{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:none;
+    border:none;
+    color:var(--text);
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    padding:8px 10px 8px 6px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+  }
+  .viewer-back:active{ background:var(--surface-2); }
+  .viewer-back svg{ width:18px; height:18px; }
+
+  .viewer-title{
+    font-size:13px;
+    color:var(--text-muted);
+    font-weight:500;
+    flex:1;
+    text-align:center;
+    padding-right:70px; /* bilancia visivamente il pulsante indietro */
+  }
+
+  #app-frame{
+    flex:1;
+    width:100%;
+    border:none;
+    background:var(--bg);
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= STATUS BAR ================= -->
+  <div class="statusbar">
+    <span id="clock">--:--</span>
+    <span>Hub</span>
+  </div>
+
+  <!-- ================= HERO / TITOLO ================= -->
+  <header class="hero">
+    <h1>I tuoi progetti</h1>
+    <p>Tocca un'app per aprirla</p>
+  </header>
+
+  <!-- ================= GRIGLIA LAUNCHER ================= -->
+  <main>
+    <div class="grid" id="app-grid"><!-- generata via JS da APPS[] --></div>
+    <footer class="hub-footer">420doma · installato come app</footer>
+  </main>
+
+  <!-- ================= APP VIEWER (iframe fullscreen) ================= -->
+  <div id="app-viewer" aria-hidden="true">
+    <div class="viewer-bar">
+      <button class="viewer-back" id="btn-close" aria-label="Torna al launcher">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        Hub
+      </button>
+      <span class="viewer-title" id="viewer-title"></span>
+    </div>
+    <iframe id="app-frame" title="Applicazione" src="about:blank"></iframe>
+  </div>
+
+<script>
+  /* ============================================================
+     CONFIGURAZIONE APP
+     Aggiungi qui nuovi progetti: bastano queste 6 proprietà.
+     ============================================================ */
+  const APPS = [
+    {
+      id: "trip",
+      name: "Trip",
+      desc: "Conta KM moto",
+      icon: "🏍️",
+      color: "rgba(232,163,61,0.16)",
+      url: "https://420doma.github.io/trip/"
+    },
+    {
+      id: "aenapmi",
+      name: "AenaPMI",
+      desc: "Aviazione",
+      icon: "✈️",
+      color: "rgba(90,160,230,0.16)",
+      url: "https://420doma.github.io/AenaPMI/"
+    },
+    {
+      id: "urbex",
+      name: "Urbex",
+      desc: "Esplorazione urbana",
+      icon: "🏚️",
+      color: "rgba(140,140,150,0.18)",
+      url: "https://420doma.github.io/urbex/"
+    }
+  ];
+
+  const grid       = document.getElementById('app-grid');
+  const viewer      = document.getElementById('app-viewer');
+  const frame       = document.getElementById('app-frame');
+  const viewerTitle = document.getElementById('viewer-title');
+  const btnClose    = document.getElementById('btn-close');
+
+  // --- Genera dinamicamente le card dalla configurazione APPS ---
+  APPS.forEach(app => {
+    const card = document.createElement('button');
+    card.className = 'app-card';
+    card.innerHTML = `
+      <span class="app-icon" style="--icon-bg:${app.color}">${app.icon}</span>
+      <span class="app-title">${app.name}</span>
+      <span class="app-desc">${app.desc}</span>
+    `;
+    card.addEventListener('click', () => openApp(app));
+    grid.appendChild(card);
+  });
+
+  /* ============================================================
+     NAVIGAZIONE "APP-LIKE" TRAMITE IFRAME + HISTORY API
+     Apertura: carica l'url nell'iframe e spinge uno stato nella
+     cronologia del browser. Chiusura: sia il pulsante "Hub" sia
+     il gesto nativo indietro (Android/iOS) devono riportare alla
+     griglia SENZA uscire dalla PWA. Per ottenere questo, entrambi
+     i percorsi passano da history.back(), così la sorgente di
+     verità resta sempre la cronologia (nessuna duplicazione di
+     logica tra bottone e popstate).
+     ============================================================ */
+  function openApp(app){
+    frame.src = app.url;
+    viewerTitle.textContent = app.name;
+    viewer.classList.add('open');
+    viewer.setAttribute('aria-hidden', 'false');
+    // Spinge uno stato "app aperta": un back nativo lo consumerà.
+    history.pushState({ hubApp: app.id }, '', '#' + app.id);
+  }
+
+  function closeViewerUI(){
+    viewer.classList.remove('open');
+    viewer.setAttribute('aria-hidden', 'true');
+    // Libera l'iframe dopo la transizione per fermare eventuale audio/video.
+    setTimeout(() => { frame.src = 'about:blank'; }, 250);
+  }
+
+  // Pulsante "Hub": delega a history.back() per restare coerenti
+  // con il flusso gestito da popstate.
+  btnClose.addEventListener('click', () => {
+    if (history.state && history.state.hubApp) {
+      history.back();
+    } else {
+      closeViewerUI();
+    }
+  });
+
+  // Gesto/back nativo del sistema operativo (Android/iOS) o
+  // pulsante back del browser: intercettato qui.
+  window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.hubApp) {
+      // caso raro: avanti/indietro tra due stati "app" diversi
+      const app = APPS.find(a => a.id === event.state.hubApp);
+      if (app) {
+        frame.src = app.url;
+        viewerTitle.textContent = app.name;
+        viewer.classList.add('open');
+        viewer.setAttribute('aria-hidden', 'false');
+      }
+    } else {
+      closeViewerUI();
+    }
+  });
+
+  // Chiudi anche con tasto Esc (comodo su desktop).
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && viewer.classList.contains('open')) {
+      btnClose.click();
+    }
+  });
+
+  // --- Orologio live nella status bar (tocco "OS") ---
+  function tickClock(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clock').textContent = `${hh}:${mm}`;
+  }
+  tickClock();
+  setInterval(tickClock, 15000);
+
+  // --- Registrazione Service Worker ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.warn('Registrazione Service Worker fallita:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
