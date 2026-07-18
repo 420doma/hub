@@ -335,13 +335,10 @@
      Apertura: carica l'url nell'iframe e spinge uno stato nella
      cronologia del browser. Chiusura: sia il pulsante "Hub" sia
      il gesto nativo indietro (Android/iOS) devono riportare alla
-     griglia SENZA uscire dalla PWA. Per ottenere questo, entrambi
-     i percorsi passano da history.back(), così la sorgente di
-     verità resta sempre la cronologia (nessuna duplicazione di
-     logica tra bottone e popstate).
+     griglia SENZA uscire dalla PWA.
      ============================================================ */
   function openApp(app){
-    frame.src = app.url;
+    frame.contentWindow.location.replace(app.url);
     viewerTitle.textContent = app.name;
     viewer.classList.add('open');
     viewer.setAttribute('aria-hidden', 'false');
@@ -353,7 +350,7 @@
     viewer.classList.remove('open');
     viewer.setAttribute('aria-hidden', 'true');
     // Libera l'iframe dopo la transizione per fermare eventuale audio/video.
-    setTimeout(() => { frame.src = 'about:blank'; }, 250);
+    setTimeout(() => { frame.contentWindow.location.replace('about:blank'); }, 250);
   }
 
   // Pulsante "Hub": delega a history.back() per restare coerenti
@@ -373,7 +370,7 @@
       // caso raro: avanti/indietro tra due stati "app" diversi
       const app = APPS.find(a => a.id === event.state.hubApp);
       if (app) {
-        frame.src = app.url;
+        frame.contentWindow.location.replace(app.url);
         viewerTitle.textContent = app.name;
         viewer.classList.add('open');
         viewer.setAttribute('aria-hidden', 'false');
